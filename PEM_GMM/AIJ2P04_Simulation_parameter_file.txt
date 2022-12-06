@@ -1,0 +1,64 @@
+# Common keywords
+
+# TESS data download keywords
+Target_ID:		TIC 123231021
+data_product:		0
+smoothing_length:	401
+cross_reference:	KIC7582608
+
+# Time system
+Time_system:		BJD
+Epoch:			2458990.542151
+
+# Results from the literature
+# Units: Aplitude in mmag, frequency in mHz.
+From:			Holdsworth et al, 2015
+Lit_amplitude:		1.45
+Lit_frequency:		2.1034
+
+# Two-sine model parameter bounds
+# F1 is the first frequency in days^-1, F2 is the second frequency in days^-1
+# Previous constrained best fit.
+#F1_lower:		8.333333e-2
+#F1_upper:		8.695652e-2
+#F2_lower:		7.812500e-3
+#F2_upper:		8.333333e-3
+
+F1_lower:		3.333333e-2
+F1_upper:		0.1
+F2_lower:		0.001
+F2_upper:		0.01
+
+# Data analysis specific keywords
+#TESS_path:		E:/Dropbox/ERAU/SARA Collaboration\Field roAp Photometry/Monte Carlo Simulations/
+TESS_path:		D:/Dropbox/ERAU/SARA Collaboration\Field roAp Photometry/Monte Carlo Simulations/
+#TESS_path:		C:/Users/Steve/Dropbox/ERAU/SARA Collaboration\Field roAp Photometry/Monte Carlo Simulations/
+
+Data_path_1:		E:/Dropbox/ERAU/SARA Collaboration\Field roAp Photometry/Monte Carlo Simulations/
+Data_path_2:		D:/Dropbox/ERAU/SARA Collaboration\Field roAp Photometry/Monte Carlo Simulations/
+Data_path_3:		C:/Users/Steve/Dropbox/ERAU/SARA Collaboration\Field roAp Photometry/Monte Carlo Simulations/
+
+target:			
+sector:			
+case:			
+subcase:		
+TESS_file:		simulated_Mcmc_results_10000.txt		
+
+# E-M Algprithm for Gaussian Mixture Model Parameters
+# itermax = Maximum number of parabolic acceleration routine iterations
+# kauth = Maximum number of E-M algorith iterations. Must be at least 3.
+# tol = E-M convergence tolerance. Based on changes in log liklelyhood
+# h = PEM search grid size
+# a = PEM ratio for geometric search
+itermax:		1000 
+kauth:			10
+tol:			1e-8 
+h:			0.1
+a:			2.5
+
+# Ground-based data analysis specific keywords
+GB_path:		D:/Dropbox/ERAU/SARA Collaboration\Field roAp Photometry/From SARA/
+observatory:		SARA-CT
+obsdate:		080921UT
+calib_dir:		HD176384B_calibrated
+GB_file:		HD176384B_Measurements_reduced

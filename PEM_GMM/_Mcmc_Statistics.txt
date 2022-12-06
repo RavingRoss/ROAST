@@ -1,0 +1,130 @@
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1500.97543465936155  246.96413148526864  1.851 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50012540486336  0.24898444008277  3.061 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.49843970032093  0.25039656843892  1.858 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.49841951928781  0.24976253534985  1.648 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.49841951928781  0.24976253534985  1.599 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50012540486336  0.24898444008277  2.913 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50012540486336  0.24898444008277  1.314 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50012540486336  0.24898444008277  1.255 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50012540486336  0.24898444008277  1.384 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50012540486336  0.24898444008277  1.180 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50012540486336  0.24898444008277  1.435 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50012540486336  0.24898444008277  1.239 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50012540486336  0.24898444008277  1.322 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.49843970032093  0.25039656843892  0.949 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.49843970032093  0.25039656843892  1.008 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.49843970032093  0.25039656843892  1.037 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.49843970032093  0.25039656843892  0.965 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50335514484020  0.24969543242226  1.678 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50005539950320  0.24899297613353  1.466 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.49842675912106  0.25039476043519  0.906 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50335514484020  0.24969543242226  1.564 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50335514484020  0.24969543242226  1.704 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50335514484020  0.24969543242226  1.815 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50335514484020  0.24969543242226  1.363 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.50335514484020  0.24969543242226  1.638 
+MCMC STATISTICS
+  
+F   Proportion      Ampl           Ampl.Sigma      GoF
+                   [mmag]            [mmag]
+ 1   1.00000  1.49840422935400  0.25044292985684  1.072 
