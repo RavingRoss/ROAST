@@ -170,7 +170,7 @@ def looksee(x, quantity, units):
     
         parameters = []
         proportions = []
-        parameters = [float(item) for item in input("Gaussian Parameters [e.g. 2.5 0.005 2.15 0.005]: ").split()]
+        parameters = [float(item) for item in input("Trial Mean(s) & Stdev(s) of " + quantity + " [e.g. 2.5 0.005 2.15 0.005]: ").split()]
     
         ngauss = int(len(parameters)/2)
     
@@ -183,8 +183,13 @@ def looksee(x, quantity, units):
             j = j + 2
         plt.show()
         done = input("Are you satisified with the placements? [Yes or No] : ")  
-        
-    proportions = [float(item) for item in input("Poportions [e.g. 0.5 0.5]: ").split()]
+    
+    proportion = 1/ngauss
+    proportions = [0]*ngauss
+    for i in range(0, ngauss):
+        proportions[i] = proportion
+    print ("Initial Proportions =", proportions)
+    
     return parameters, proportions, nbins, lower, upper, ndata
 
 def logLikelyhood(x, ngauss, pi, gdev):
@@ -231,7 +236,6 @@ def bin_errors(x, nsamples, sample_size):
                             out=None, ddof=1))
 
     esigmas = np.reshape(esigmas, [nruns, nbins])    
-    bins = np.linspace(np.min(x), np.max(x), nbins)
     esigmas = np.mean(esigmas, axis=0)
     esigmas = confidence_interval(nsamples, esigmas, 0.68, nsamples-2)
     return esigmas
@@ -241,6 +245,11 @@ def EM(x, proportions, gaussians, quantity, units, kauth, esigmas):
     #=============================================================
     # Expectation - (Log Likelyhood) Maximization (EM) algorithm
     #=============================================================
+    #
+    # Algorith taken from
+    # "Expectation maximization and Gaussian mixture models",
+    # By Tobias Schlagenhauf. Last modified: 22 Feb 2022.
+    # URL: https://python-course.eu/machine-learning/expectation-maximization-and-gaussian-mixture-models-gmm.php
     #
     #--------------------
     # Expectation step
@@ -294,19 +303,14 @@ def EM(x, proportions, gaussians, quantity, units, kauth, esigmas):
     while (epsilon > tol and k <= kauth):
         old_log_likelyhood = log_likelyhood
         
-        must_old = must
-        sigst_old = sigst   
-        
         # Limit the PDFs to this range
         prange = np.linspace(lower, upper, nbins)
         
+        # Do not let the proportions go negative
         if any(x < 0 for x in pi):
-            print("Pi has gone negative")
             index_max_pi = np.argmax(np.array(pi))
             pi = [0]*ngauss
             pi[index_max_pi] = 1.
-            #must = must_old
-            #sigst = sigst_old
             
         #Probability that each datapoint belongs to each gaussian distribution
         for c,g,p in zip(range(ngauss), gdev, pi):
@@ -338,7 +342,6 @@ def EM(x, proportions, gaussians, quantity, units, kauth, esigmas):
         
         binwidth = binedges[1] - binedges[0]
         scaleFactor = binwidth*ndata
-        Total = np.sum(binvalues)*scaleFactor       
         
         # Calculate the goodness of fit
         Nobs = binvalues*scaleFactor # number per bin
@@ -346,11 +349,11 @@ def EM(x, proportions, gaussians, quantity, units, kauth, esigmas):
         Nmodel = Gpdf*scaleFactor
         #Nmodel = gpdf[index_max_pi]*scaleFactor*pi[index_max_pi]
         Tmodel = sum(Nmodel)
-
-        bin_variances = np.square(pi[0]*bin_errors(gdev[0].rvs(ndata), 10, 3000))
+        
         # Estimating the uncertainties on the bin values of the model
+        bin_variances = np.square(pi[0]*bin_errors(gdev[0].rvs(ndata), ns, ndata/ns))
         for i in range(1, ngauss):
-            bin_variances = np.add( bin_variances, np.square(pi[i]*bin_errors(gdev[i].rvs(ndata), 10, 3000) ) )
+            bin_variances = np.add( bin_variances, np.square(pi[i]*bin_errors(gdev[i].rvs(ndata), ns, ndata/ns) ) )
         model_errors = np.sqrt(bin_variances)
         
         sigmas = np.sqrt(esigmas**2 + model_errors**2)*scaleFactor # estimated in the initialization step.
@@ -383,6 +386,12 @@ def EM(x, proportions, gaussians, quantity, units, kauth, esigmas):
         plt.ylabel(y_label, fontsize=12)
         plt.suptitle(ptitle, y=0.92, fontsize=14)
         plt.axis([xlower, xupper, None, None])  
+        
+        fignm = quantity + "Fit.jpeg"
+        filename = directory + "/" + fignm
+        # fig = plt.gcf()
+        plt.savefig(filename, dpi=600, bbox_inches='tight')
+        
         plt.show()
         
         #------------------------
@@ -390,6 +399,14 @@ def EM(x, proportions, gaussians, quantity, units, kauth, esigmas):
         #-----------------------
         #
         #
+        if any(x == 0 for x in pi):
+            # Save the last kauth iterations
+            pis[k-1] = np.array(pi)
+            mus[k-1] = mu_c
+            sigs[k-1] = sigma_c
+            logLs[k-1] = log_likelyhood
+            break
+        
         # The number of points belonging to each gaussian distribution.
         m_c = []
         for c in range(len(r[0])):
@@ -419,10 +436,7 @@ def EM(x, proportions, gaussians, quantity, units, kauth, esigmas):
             var_c.append((1/m_c[c])*np.dot((r_c_T*dev).T, dev) )
             
         sigma_c = np.sqrt(var_c).flatten()
-        
-        if any(x == 0 for x in sigma_c):
-           break
-        
+         
         # Update the gaussian distributions
         gdev = [0]*ngauss
         for i in range(0, ngauss):
@@ -451,26 +465,34 @@ def EM(x, proportions, gaussians, quantity, units, kauth, esigmas):
         xlower = mu_c[index_max_pi] - 7*sigma_c[index_max_pi]
         xupper = mu_c[index_max_pi] + 7*sigma_c[index_max_pi]
         k = k + 1
-        
+      
     # Niters-dimensional point in solution space
     niters = k - 1
-    pist = [0]*(niters)
-    must = [0]*(niters)
-    sigst = [0]*(niters)
-    logLst = [0]*(niters)
-    
-    for i in range(0,niters):
-        pist[i] = pis[i]
-        must[i] = mus[i]
-        sigst[i] = sigs[i]
-        logLst[i] = logLs[i]
-     
-    if len(pist) > 1:
+    if niters == 0:
+        pist = [0]*(1)
+        must = [0]*(1)
+        sigst = [0]*(1)
+        #logLst = [0]*(1)
+        pist[0] = np.array(pi)
+        must[0] = np.array(mu_c)
+        sigst[0] = np.array(sigma_c)
+        
+        logLst = logLs
         axis = 1
     else:
-        axis = 0
+        pist = [0]*(niters)
+        must = [0]*(niters)
+        sigst = [0]*(niters)
+        logLst = [0]*(niters)
+        for i in range(0,niters):
+            pist[i] = pis[i]
+            must[i] = mus[i]
+            sigst[i] = sigs[i]
+            logLst[i] = logLs[i]
+        axis = 1
+    
     P = np.concatenate((pist, must, sigst), axis=axis)
-    print ("P = ", P)    
+    
     return P, logLs, niters, GoF
 
 def ChauvenetCrit(x):
@@ -528,10 +550,10 @@ def Plot3d(x, y, z, ptitle, x_label, y_label, z_label, figno):
         figtitle.savefig(figtitle_out, dpi=600, bbox_inches='tight')
         
         
-def SaveResults(McmcStats, target, quantity, units, nfreq, ngauss):
+def SaveResults(McmcStats, directory, quantity, units, freqno, ngauss):
         header1 = "F   Proportion      " + quantity + "           " +  quantity + ".Sigma      GoF"
         header2 = "                   [" + units + "]            [" + units + "]"
-        results_out = target + '_Mcmc_Statistics.txt'
+        results_out = directory + 'Mcmc_Statistics.txt'
         print ("Saving resuls to ", results_out)
         f = open(results_out, 'a')
         f.write("MCMC STATISTICS\n")
@@ -541,202 +563,202 @@ def SaveResults(McmcStats, target, quantity, units, nfreq, ngauss):
 
         print(" ")
         print("MCMC STATISICS ")
-        l = 1
+        
         print(header1)
         print(header2)
-        for k in range(0, nfreq*ngauss*4, 4):
-            print("%2d   %4.5f  %3.14f  %3.14f  %4.3f" % (l, McmcStats[k], McmcStats[k+1], McmcStats[k+2], McmcStats[k+3]))
-            f.write("%2d   %4.5f  %3.14f  %3.14f  %4.3f \n" % (l, McmcStats[k], McmcStats[k+1], McmcStats[k+2], McmcStats[k+3]))
-            l = l + 1
+        for k in range(0, ngauss*4, 4):
+            print("%2d   %4.5f  %3.14f  %3.14f  %4.3f" % (freqno, McmcStats[k], McmcStats[k+1], McmcStats[k+2], McmcStats[k+3]))
+            f.write("%2d   %4.5f  %3.14f  %3.14f  %4.3f \n" % (freqno, McmcStats[k], McmcStats[k+1], McmcStats[k+2], McmcStats[k+3]))
         f.close()
 
-
-amplitudes = np.multiply(data[3], 1000)
-Plot3d(data[2], data[4], amplitudes, "Amplitude-Frequency-Phase Space", \
-         "Frequency [mHz]", "Phase", "Amplitude [mmag]", "")
-plt.show()
-#EM(data[2], "Frequencies", "mHz")      
-#amplitudes, outliers, indices = ChauvenetCrit(amplitudes)
-
-# Look at the parameter space to estimate number of gaussians needed
-gaussians, proportions, nbins, lower, upper, ndata = looksee(amplitudes, "Amplitudes", "mmag")
-
-# Estimating the uncertainties on the bin values 
-esigmas = bin_errors(amplitudes, 10, 3000)
-
-#---------------------
-# PEM starting run
-#---------------------
-#
-McmcStats = []
-iterations = 0
-foregraph = []
-ngauss = int(len(gaussians)/2)
-
-# Kauth is set in the paramter file.
-P, L, niters, GoF = EM(amplitudes, proportions, gaussians, "Amplitudes", "mmag", kauth, esigmas) 
-iterations = iterations + niters
-# Control Points and log(L) of most recent but one update
-CP = [0]*3
-for i in range(0,3):
-   j = niters - 3 + i
-   CP[i] = P[j] # Control points
-    
-P0 = np.array(CP[0])
-P1 = np.array(CP[1])
-P2 = np.array(CP[2])
-
-# Already converged so don't run the PEM.
-nps = len(P)-1
-if np.linalg.norm(P2-P1)**2 <= tol**2:
-    for i in range(0, ngauss):
-        McmcStats = np.append(McmcStats, [P[nps][i], P[nps][ngauss+i], P[nps][2*ngauss+i], GoF])
-    SaveResults(McmcStats, target, "Ampl", "mmag", 1, ngauss)
-    print ("Parabolic acceleration not applied as the solution has already converged.")
-    sys.exit()
-    
-L2_old = -1e200    
-
-ngauss = int(len(P2)/3) # There are three parameters to optimize.
-
-gdev = [0]*ngauss
-pi = [0]*ngauss
-mu = [0]*ngauss
-sigma = [0]*ngauss
-mu_sigma = [0]*ngauss
-
-for iter in range(1, itermax):
-    
-    for i in range(0, ngauss):
-        pi[i] = P2[i]
-        mu[i] = P2[i+ngauss]
-        sigma[i] = P2[i+2*ngauss]
-        gdev[i] = sct.norm(loc=mu[i], scale=sigma[i])    
-
-    L2 = logLikelyhood(amplitudes, ngauss, pi, gdev)
-    
-    # Geometric search
-    # Tunable search parameters
-    # h = Search grid mesh size
-    # a = Ratio
-    
-    # Search step
-    i = 1
-    t = 1 + h * a**i 
-
-    # Exploration step
-    Pnew = P2*t**2 + 2*t*(1-t)*P1 +  P0*(1-t)**2
-    
-    # Unpack the Point Pnew to get the updated pis, mus, and sigmas
-    # So as to make the updated gaussian deviates
-
-    #ngauss = int(len(Pnew)/3) # There are three parameters to optimize.
-    
-    for i in range(0, ngauss):
-        pi[i] = Pnew[i]
-        mu[i] = Pnew[i+ngauss]
-        sigma[i] = Pnew[i+2*ngauss]
-        gdev[i] = sct.norm(loc=mu[i], scale=sigma[i])    
-    
-    Lnew = logLikelyhood(amplitudes, ngauss, pi, gdev)
-    
-    if Lnew <= L2:
-        print("Lnew <= L2")
-        P0 = P2
-    
-        for i in range(0, ngauss):
-            pi[i] = P0[i]
-            mu[i] = P0[i+ngauss]
-            sigma[i] = P0[i+2*ngauss]
-            mu_sigma[i] = [mu[i], sigma[i]]
+def Parabolic_Accelerator(data, quantity, units):
+        #---------------------
+        # PEM starting run
+        #---------------------
+        #
+        # Taken from 
+        # "Parabolic acceleration of the EM algorithm"
+        # A. Berlinet and C. Roland, Published Online 16 May 2008 
+        # in Stat Comput (2009) 19: 35–47 
+        # DOI 10.1007/s11222-008-9067-x
+        #
+        McmcStats = []
+        iterations = 0
+        ngauss = int(len(gaussians)/2)
         
-        musigma = list(its.chain.from_iterable(mu_sigma)) # Flatten the parameter list
-        P1, L, niters, GoF = EM(amplitudes, pi, musigma, "Amplitudes", "mmag", 1, esigmas) 
+        # Kauth is set in the paramter file.
+        P, L, niters, GoF = EM(data, proportions, gaussians, quantity, units, kauth, esigmas) 
         iterations = iterations + niters
-        P1 = np.array(list(its.chain.from_iterable(P1))) # Flatten the solution point
-    
-        for i in range(0, ngauss):
-            pi[i] = P1[i]
-            mu[i] = P1[i+ngauss]
-            sigma[i] = P1[i+2*ngauss]
-            mu_sigma[i] = [mu[i], sigma[i]]  
+        # Control Points and log(L) of most recent but one update
+        CP = [0]*3
+        for i in range(0,3):
+           j = niters - 3 + i
+           CP[i] = P[j] # Control points
+            
+        P0 = np.array(CP[0])
+        P1 = np.array(CP[1])
+        P2 = np.array(CP[2])
         
-        musigma = list(its.chain.from_iterable(mu_sigma)) # Flatten the parameter lists    
-        P2, L, niters, GoF = EM(amplitudes,  pi, musigma, "Amplitudes", "mmag", 1, esigmas) 
-        Pout = P2
-        nps = len(Pout)-1
-        iterations = iterations + niters
-        P2 = np.array(list(its.chain.from_iterable(P2))) # Flatten the solution point
-    else:
+        # Already converged so don't run the PEM.
+        nps = len(P)-1
+        if np.linalg.norm(P2-P1)**2 <= tol**2:
+            for i in range(0, ngauss):
+                McmcStats = np.append(McmcStats, [P[nps][i], P[nps][ngauss+i], P[nps][2*ngauss+i], GoF])
+            print ("Parabolic acceleration not applied as the solution has already converged.")
+            return McmcStats
+            
+        L2_old = -1e200    
         
-        while Lnew > L2:
-            print ("Lnew > L2")
-            Pold = Pnew
-            L2 = Lnew
-            i = i + 1
+        ngauss = int(len(P2)/3) # There are three parameters to optimize.
+        
+        gdev = [0]*ngauss
+        pi = [0]*ngauss
+        mu = [0]*ngauss
+        sigma = [0]*ngauss
+        mu_sigma = [0]*ngauss
+        
+        for iter in range(1, itermax):
+            
+            for i in range(0, ngauss):
+                pi[i] = P2[i]
+                mu[i] = P2[i+ngauss]
+                sigma[i] = P2[i+2*ngauss]
+                gdev[i] = sct.norm(loc=mu[i], scale=sigma[i])    
+        
+            L2 = logLikelyhood(data, ngauss, pi, gdev)
+            
+            # Geometric search
+            # Tunable search parameters
+            # h = Search grid mesh size
+            # a = Ratio
+            
+            # Search step
+            i = 1
             t = 1 + h * a**i 
+        
+            # Exploration step
             Pnew = P2*t**2 + 2*t*(1-t)*P1 +  P0*(1-t)**2
             
+            # Unpack the Point Pnew to get the updated pis, mus, and sigmas
+            # So as to make the updated gaussian deviates
+             
             for i in range(0, ngauss):
                 pi[i] = Pnew[i]
                 mu[i] = Pnew[i+ngauss]
                 sigma[i] = Pnew[i+2*ngauss]
-                mu_sigma[i] = [mu[i], sigma[i]]  
                 gdev[i] = sct.norm(loc=mu[i], scale=sigma[i])    
+            
+            Lnew = logLikelyhood(data, ngauss, pi, gdev)
+            
+            if Lnew <= L2:
+                print("Lnew <= L2")
+                P0 = P2
+            
+                for i in range(0, ngauss):
+                    pi[i] = P0[i]
+                    mu[i] = P0[i+ngauss]
+                    sigma[i] = P0[i+2*ngauss]
+                    mu_sigma[i] = [mu[i], sigma[i]]
+                
+                musigma = list(its.chain.from_iterable(mu_sigma)) # Flatten the parameter list
+                P1, L, niters, GoF = EM(data, pi, musigma, quantity, units, 1, esigmas) 
+                iterations = iterations + niters
+                P1 = np.array(list(its.chain.from_iterable(P1))) # Flatten the solution point
+            
+                for i in range(0, ngauss):
+                    pi[i] = P1[i]
+                    mu[i] = P1[i+ngauss]
+                    sigma[i] = P1[i+2*ngauss]
+                    mu_sigma[i] = [mu[i], sigma[i]]  
+                
+                musigma = list(its.chain.from_iterable(mu_sigma)) # Flatten the parameter lists    
+                P2, L, niters, GoF = EM(data,  pi, musigma, quantity, units, 1, esigmas) 
+                Pout = P2
+                nps = len(Pout)-1
+                iterations = iterations + niters
+                P2 = np.array(list(its.chain.from_iterable(P2))) # Flatten the solution point
+            else:
+                
+                while Lnew > L2:
+                    print ("Lnew > L2")
+                    Pold = Pnew
+                    L2 = Lnew
+                    i = i + 1
+                    t = 1 + h * a**i 
+                    Pnew = P2*t**2 + 2*t*(1-t)*P1 +  P0*(1-t)**2
+                    
+                    for i in range(0, ngauss):
+                        pi[i] = Pnew[i]
+                        mu[i] = Pnew[i+ngauss]
+                        sigma[i] = Pnew[i+2*ngauss]
+                        mu_sigma[i] = [mu[i], sigma[i]]  
+                        gdev[i] = sct.norm(loc=mu[i], scale=sigma[i])    
+                
+                    Lnew = logLikelyhood(data, ngauss, pi, gdev)    
+                
+                P0 = P1
+                P1 = P2
+                
+                musigma = list(its.chain.from_iterable(mu_sigma)) # Flatten the parameter lists  
+                P2, L, niters, GoF = EM(data,  pi, musigma, quantity, units, 2, esigmas) 
+                
+                nps = len(P2)-1
+                if nps >= 0:
+                    Pout = P2
+                    P2 = P2[nps]
+                else:
+                    Pout = P1
+                P2 = np.array(P2)   
+                iterations = iterations + niters
+            
+            print("Lnew = ", Lnew)
+            if (abs(L2-L2_old) <= tol or nps == -1):
+                print ("Total Iterations =",  iterations)
+                for i in range(0, ngauss):
+                    McmcStats = np.append(McmcStats, [Pout[nps][i], Pout[nps][ngauss+i], Pout[nps][2*ngauss+i], GoF])
+                
+                return McmcStats
+            else:
+                L2_old = L2
         
-            Lnew = logLikelyhood(amplitudes, ngauss, pi, gdev)    
-        
-        P0 = P1
-        P1 = P2
-        
-        musigma = list(its.chain.from_iterable(mu_sigma)) # Flatten the parameter lists  
-        P2, L, niters, GoF = EM(amplitudes,  pi, musigma, "Amplitudes", "mmag", 2, esigmas) 
-        
-        nps = len(P2)-1
-        if nps >= 0:
-            Pout = P2
-            P2 = P2[nps]
-        else:
-            pout = P1
-        P2 = np.array(P2)   
-        iterations = iterations + niters
-    
-    print("Lnew = ", Lnew)
-    if (abs(L2-L2_old) <= tol or Pout == []):
         print ("Total Iterations =",  iterations)
         for i in range(0, ngauss):
-            McmcStats = np.append(McmcStats, [Pout[nps][i], Pout[nps][ngauss+i], Pout[nps][2*ngauss+i], GoF])
-        SaveResults(McmcStats, target, "Ampl", "mmag", 1, ngauss)
-        sys.exit()
-    else:
-        L2_old = L2
+            McmcStats = np.append(McmcStats, [Pout[nps][i], Pout[nps][ngauss+i], Pout[nps][2*ngauss+i], GoF])   
+        return McmcStats
+    
+ns = 10 # number of subsamples
+    
+#amplitudes, outliers, indices = ChauvenetCrit(amplitudes)
 
-print ("Total Iterations =",  iterations)
-for i in range(0, ngauss):
-    McmcStats = np.append(McmcStats, [Pout[nps][i], Pout[nps][ngauss+i], Pout[nps][2*ngauss+i], GoF])
-SaveResults(McmcStats, target, "Ampl", "mmag", 1, ngauss)    
+labels = [""]*3
+labels[0] = ["Frequencies", "mHz"] 
+labels[1] = ["Amplitudes", "mmag"] 
+labels[2] = ["Phases", "x2" + r'$\pi$' + " radians"] 
 
+for f in range(0, nfreq*3, 3):
+    freqno = int(1 + f/3)
+    amplitudes = np.multiply(data[f+3], 1000)
+    Plot3d(data[f+2], data[f+4], amplitudes, "F" + str(freqno) + " Amplitude-Frequency-Phase Space", \
+         labels[0][0] + "[" + labels[0][1] + "]", \
+         labels[2][0] + "[" + labels[2][1] + "]", \
+         labels[1][0] + "[" + labels[1][1] + "]", "")
+    plt.show()
+    
+    for d,l in zip([data[f+2], amplitudes, data[f+4]], labels):
+        # Look at the parameter space to estimate number of gaussians needed
+        gaussians, proportions, nbins, lower, upper, ndata = looksee(d, l[0], l[1])
+    
+        # Estimating the uncertainties on the bin values 
+        esigmas = bin_errors(d, ns, ndata/ns)
+    
+        # PEM Algorithm
+        McmcStats = Parabolic_Accelerator(d, l[0], l[1])
+        
+        # Save means and sigmas to a file
+        ngauss = int(len(gaussians)/2)
+        SaveResults(McmcStats, directory, l[0], l[1], freqno, ngauss)
+        
+sys.exit()
 
-# Montage of plots of F1
-amplitudes = np.multiply(data[3], 1000)
-fig25, ax = plt.subplots(3, 2, figsize=(11, 8.5), constrained_layout=True)
-
-plt.subplot(3, 2, 1)
-
-
-plt.subplot(3, 2, 2)
-
-plt.subplot(3, 2, 3)
-
-plt.subplot(3, 2, 4)
-
-plt.subplot(3, 2, 5)
-
-
-plt.subplot(3, 2, 6)
-
-montage_out = target + '_Mcmc_Montage_of_F1' + '.png'
-fig25 = plt.gcf()
-fig25.savefig(montage_out, dpi=600, bbox_inches='tight')
 
 
